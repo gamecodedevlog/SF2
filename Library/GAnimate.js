@@ -1,3 +1,24 @@
+var COLLISION_DATA = [
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    ];
+
 class Animate{
     static set callbackSound(callbackSound){this.callbackSound = callbackSound};
     static get callbackSound(){return this.callbackSound};
@@ -123,26 +144,18 @@ class AnimateContainer{
     static get COLLISION_UP(){return 5;};
     static get COLLISION_DOWN(){return 6;};
     static get SOUND_ENDED (){return 7;};
-    constructor(engine){
+    constructor(){
         this.collision = new GCollision();
         this.objectArray = new Array(0);
         this.newObjectArray = new Array(0);
         
         this._unitW = 0;
         this._unitH = 0;
-        this.scale = 1;
-
-        this.collisionArray = null;
+        this.collisionArray =0;
         this.indexStartXCollisionArray = 0;
         this.indexStartYCollisionArray = 0;
 
-        this.canvas;
-        this.context;
-        this.bufferCanvas;
-        this.bufferContext;
-
         this.engine;
-        this.setEngine(engine);
     }
 
     checkCollision(){
@@ -163,8 +176,9 @@ class AnimateContainer{
         }
     }
 
-    drawNextFrame(){
-        this.context.drawImage(this.bufferCanvas, 0, 0);
+    drawNextFrame(engine){
+        this.engine = engine;
+        engine.context.drawImage(engine.bufferCanvas, 0, 0);
         for (var index = 0; index < this.objectArray.length; index++) {
             this.objectArray[index].nextFrame(index);
             if(this.objectArray[index].index == 0 & this.objectArray[index].isAniLoop == false){
@@ -186,20 +200,20 @@ class AnimateContainer{
             element.y += element.objectState[3][element.index] * element.reverseY;
 
             var idx_X_1=parseInt((element.x) /this._unitW) + this.indexStartXCollisionArray;
-            var idx_X_2=parseInt((element.x+element.w) /this._unitW) + this.indexStartXCollisionArray;
+            var idx_X_2=parseInt((element.x + element.w) /this._unitW) + this.indexStartXCollisionArray;
             var idx_Y=parseInt((element.y + element.h) /this._unitH) + this.indexStartYCollisionArray;
 
             if( idx_Y > 1 & !isEmpty(element.objectState[4])){
                 if(this.collisionArray[idx_Y-1][idx_X_1] != 0 ){
                     if(element.objectState[4][element.index] !=0)
-                    if(tmpx >= element.x)
-                    element.x = tmpx;
-
-                    this.objectArray[index].callback(AnimateContainer.COLLISION_LEFT,index); 
+                    if(tmpx >= element.x){
+                        element.x = tmpx +5;
+                        this.objectArray[index].callback(AnimateContainer.COLLISION_LEFT,index); 
+                    }
                 }
-                else if(this.collisionArray[idx_Y-1][idx_X_2] != 0 ){
+                if(this.collisionArray[idx_Y-1][idx_X_2] != 0 ){
                     if(element.objectState[4][element.index] !=0)
-                    element.x = tmpx;
+                    element.x = tmpx-5;
                 
                     this.objectArray[index].callback(AnimateContainer.COLLISION_RIGHT,index); 
                 }
@@ -229,23 +243,23 @@ class AnimateContainer{
                 this.objectArray[index].callback(AnimateContainer.COLLISION_UP,index);
             }
 
-            this.context.save();
-            this.context.scale(this.scale, this.scale);  
+            engine.context.save();
+            engine.context.scale(engine.scale, engine.scale);  
             
             if(element.glint != 0){
                 if((element.glint % 2)==0)
-                this.context.globalAlpha = 0.1;
-                else this.context.globalAlpha = 1.0;
+                engine.context.globalAlpha = 0.1;
+                else engine.context.globalAlpha = 1.0;
             }
 
             if(element.objectState[0][element.index] * element.reverseImg >= 0)
-                this.context.drawImage(image, element.x , element.y);
+            engine.context.drawImage(image, element.x , element.y);
             else{
                 element.x +=  element.pre_w - element.w;
                 this.flipHorizontally(image, element.x , element.y);
             }
                 
-            this.context.restore();
+            engine.context.restore();
         }
         this.checkCollision();
     }
@@ -331,17 +345,18 @@ class AnimateContainer{
     }
 
     flipHorizontally(img,x,y){     
-        this.context.translate(x+img.width,y);
-        this.context.scale(-1,1);
-        this.context.drawImage(img,0,0);
-        this.context.setTransform(1,0,0,1,0,0);
+        this.engine.context.translate(x+img.width,y);
+        this.engine.context.scale(-1,1);
+        this.engine.context.drawImage(img,0,0);
+        this.engine.context.setTransform(1,0,0,1,0,0);
     }
 
-    // flipVertically(img,x,y){
-    //     this.context.translate(x+img.width,y);
-    //     this.context.scale(1,-1);
-    //     this.context.drawImage(img,0,img.height);
-    // }
+    flipVertically(img,x,y){
+        this.context.translate(x,y+img.height);
+        this.context.scale(1,-1);
+        this.context.drawImage(img,0,0);
+        this.engine.context.setTransform(1,0,0,1,0,0);
+    }
     
     setCollisonArray(collisionArray){
         this.setScale(this.engine.getScale());
@@ -397,35 +412,35 @@ class AnimateContainer{
         return this;
     }
   
-    drawMap(map,image,sizeW,sizeH){
+    drawMap(context,map,image,sizeW,sizeH){
         var W = sizeW *this.scale;
         var H = sizeH *this.scale;
         var maxY = map.length - this.indexStartYCollisionArray;
         for(var y=0; y<maxY; y++) {
             for(var x=0; x<map[0].length- this.indexStartXCollisionArray; x++) {
-                this.bufferContext.drawImage(image[map[y+this.indexStartYCollisionArray][x+this.indexStartXCollisionArray]] , x * W, y * H, W, H);
+                context.drawImage(image[map[y+this.indexStartYCollisionArray][x+this.indexStartXCollisionArray]] , x * W, y * H, W, H);
             }
         }
         return this;
     }
 
-    drawGrid(map,sizeW,sizeH){
+    drawGrid(context,map,sizeW,sizeH){
         var W = sizeW *this.scale;
         var H = sizeH *this.scale;
         var maxY = map.length - this.indexStartYCollisionArray;
         var minY = map.length < maxY ?map.length:maxY;
         for(var y=0; y<minY; y++) {
             for(var x=0; x<map[0].length- this.indexStartXCollisionArray; x++) {
-                this.bufferContext.strokeRect(x * W, y * H, W, H);
-                this.bufferContext.fillText("" + map[y +this.indexStartYCollisionArray][x +this.indexStartXCollisionArray], (x * W)+W/2, (y * H)+H/2, 10);
+                context.strokeRect(x * W, y * H, W, H);
+                context.fillText("" + map[y +this.indexStartYCollisionArray][x +this.indexStartXCollisionArray], (x * W)+W/2, (y * H)+H/2, 10);
            }
         }
         return this;
     }
 
-    drawCollisionArray(map,image,W,H){
-        this.drawMap(map,image,W,H);
-        this.drawGrid(map,W,H);
+    drawCollisionArray(context,map,image,W,H){
+        this.drawMap(context,map,image,W,H);
+        this.drawGrid(context,map,W,H);
         return this;
     }
 }

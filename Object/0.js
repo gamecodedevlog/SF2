@@ -51,11 +51,11 @@ OBJECT[ID.BG] = {
 };
 
 function callbackView(type,indexA,indexB,angle){
-    var objA = _ANIMATE_CONTAINER.getObject(indexA);
-    var objB = _ANIMATE_CONTAINER.getObject(indexB)
+    var objA = _ENGINE.getObject(indexA);
+    var objB = _ENGINE.getObject(indexB)
     switch (type) {
         case AnimateContainer.END_FRAME:
-            _ANIMATE_CONTAINER.setState(indexA,STATE[ID.BG].NEW_VIEW,objA.x,objA.y);
+            _ENGINE.setState(indexA,STATE[ID.BG].NEW_VIEW,objA.x,objA.y);
         break;
         case AnimateContainer.NEXT_FRAME:
             _BG.setState(STATE[ID.BG].NEW_BG,objA.x-500,_BG.y);
